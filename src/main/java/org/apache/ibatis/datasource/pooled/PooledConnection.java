@@ -27,18 +27,53 @@ import org.apache.ibatis.reflection.ExceptionUtil;
  * @author Clinton Begin
  */
 class PooledConnection implements InvocationHandler {
+  /**
+   *
+   * PooledDatSource并不会直接管理 Connection对象，而是管理PooledConnection对象，在PooledConnection对象中
+   * 封装了真正的数据库连接Connection对象 以及其代理对象。 这里的代理对象是通过JDK动态代理产生的 。
+   * PooledConnection 继承了InvocationHandler接口，
+   *
+   *
+   */
+
 
   private static final String CLOSE = "close";
   private static final Class<?>[] IFACES = new Class<?>[] { Connection.class };
 
   private final int hashCode;
+  /**
+   * 记录当前PooledConnection对象所在的PoolDataSource，该PooledConnection是从这个PooledDataSource中获取的。
+   * 当调用close方法时 会将该PooledConnection放回 PooledDataSource中
+   *
+   */
   private final PooledDataSource dataSource;
+  /**
+   * 真正的数据库连接对象
+   */
   private final Connection realConnection;
+  /**
+   * 数据库连接的代理对象
+   */
   private final Connection proxyConnection;
+  /**
+   * 从连接池中取出该连接的时间戳
+   */
   private long checkoutTimestamp;
+  /**
+   * 该连接创建的时间戳
+   */
   private long createdTimestamp;
+  /**
+   * 最后一次被使用的时间戳
+   */
   private long lastUsedTimestamp;
+  /**
+   * 由 数据库URL，用户名 和密码计算出来的hash值，可以用于标识 该连接所在的连接池
+   */
   private int connectionTypeCode;
+  /**
+   * 检测当前PooledConnection是否有效，主要视为了放置程序通过cloes方法将连接归还连接池之后，依然通过该连接操作数据库
+   */
   private boolean valid;
 
   /**
@@ -242,16 +277,21 @@ class PooledConnection implements InvocationHandler {
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     String methodName = method.getName();
+    // 如果调用close方法，将其放入到连接池，而不是真正关闭数据库连接
     if (CLOSE.equals(methodName)) {
       dataSource.pushConnection(this);
       return null;
     }
     try {
+
       if (!Object.class.equals(method.getDeclaringClass())) {
         // issue #579 toString() should never fail
         // throw an SQLException instead of a Runtime
+        //通过valid字段检测连接是否有效
         checkConnection();
+
       }
+      //调用哦真正数据库连接对象的对应方法，问题： 为什么不是针对proxyConnection
       return method.invoke(realConnection, args);
     } catch (Throwable t) {
       throw ExceptionUtil.unwrapThrowable(t);

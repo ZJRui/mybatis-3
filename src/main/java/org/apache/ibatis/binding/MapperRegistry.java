@@ -32,6 +32,10 @@ import org.apache.ibatis.session.SqlSession;
  * @author Lasse Voss
  */
 public class MapperRegistry {
+  /**
+   * Mapper接口及其对应的代理对象工厂的注册中心
+   *
+   */
 
   private final Configuration config;
   private final Map<Class<?>, MapperProxyFactory<?>> knownMappers = new HashMap<>();
@@ -42,11 +46,13 @@ public class MapperRegistry {
 
   @SuppressWarnings("unchecked")
   public <T> T getMapper(Class<T> type, SqlSession sqlSession) {
+    //查找 指定type对应的MapperProxyFactory
     final MapperProxyFactory<T> mapperProxyFactory = (MapperProxyFactory<T>) knownMappers.get(type);
     if (mapperProxyFactory == null) {
       throw new BindingException("Type " + type + " is not known to the MapperRegistry.");
     }
     try {
+      // 创建实现了type接口的代理对象
       return mapperProxyFactory.newInstance(sqlSession);
     } catch (Exception e) {
       throw new BindingException("Error getting mapper instance. Cause: " + e, e);
@@ -58,12 +64,16 @@ public class MapperRegistry {
   }
 
   public <T> void addMapper(Class<T> type) {
+    //检查 type是否为接口
     if (type.isInterface()) {
+      //检测是否已经买加载过这个接口
       if (hasMapper(type)) {
+
         throw new BindingException("Type " + type + " is already known to the MapperRegistry.");
       }
       boolean loadCompleted = false;
       try {
+        // 创建MapperProxyFactory
         knownMappers.put(type, new MapperProxyFactory<>(type));
         // It's important that the type is added before the parser is run
         // otherwise the binding may automatically be attempted by the

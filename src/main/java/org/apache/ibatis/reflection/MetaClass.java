@@ -31,11 +31,25 @@ import org.apache.ibatis.reflection.property.PropertyTokenizer;
  */
 public class MetaClass {
 
+  /**
+   * Metaclass 通过Reflector和PropertyTokenizer组合使用，实现了对复杂属性表达式的解析，并实现了获取指定属性描述信息的功能
+   *
+   */
+
+
   private final ReflectorFactory reflectorFactory;
+  /**
+   * 在创建MetaClass时会指定一个类，该Reflector对象会用于记录该类相关的元数据信息
+   */
   private final Reflector reflector;
 
   private MetaClass(Class<?> type, ReflectorFactory reflectorFactory) {
+
     this.reflectorFactory = reflectorFactory;
+    /**
+     * 构造函数中为指定的class创建相应的Reflector对象
+     *
+     */
     this.reflector = reflectorFactory.findForClass(type);
   }
 
@@ -48,6 +62,11 @@ public class MetaClass {
     return MetaClass.forClass(propType, reflectorFactory);
   }
 
+  /**
+   * 查找属性表达式指定的属性
+   * @param name
+   * @return
+   */
   public String findProperty(String name) {
     StringBuilder prop = buildProperty(name, new StringBuilder());
     return prop.length() > 0 ? prop.toString() : null;
@@ -89,15 +108,22 @@ public class MetaClass {
   }
 
   private MetaClass metaClassForProperty(PropertyTokenizer prop) {
+    //找到指定属性对应的class
     Class<?> propType = getGetterType(prop);
+    //为该属性创建对应的metaclass对象
     return MetaClass.forClass(propType, reflectorFactory);
   }
 
   private Class<?> getGetterType(PropertyTokenizer prop) {
+    //获取属性的类型
     Class<?> type = reflector.getGetterType(prop.getName());
+    //该表达式中是否使用了 [] 指定了下标，且是collections子类
     if (prop.getIndex() != null && Collection.class.isAssignableFrom(type)) {
+      //通过TypeParameterResolver工具类解析属性的类型
       Type returnType = getGenericGetterType(prop.getName());
+      //针对ParameterizedType进行处理，即针对泛型集合类型进行处理
       if (returnType instanceof ParameterizedType) {
+        //获取实际的类型参数
         Type[] actualTypeArguments = ((ParameterizedType) returnType).getActualTypeArguments();
         if (actualTypeArguments != null && actualTypeArguments.length == 1) {
           returnType = actualTypeArguments[0];
@@ -114,6 +140,8 @@ public class MetaClass {
 
   private Type getGenericGetterType(String propertyName) {
     try {
+      //根据Reflector.getMethjods 集合中记录的invoker类型，决定解析getter方法返回值类型还是解析字段类型。
+
       Invoker invoker = reflector.getGetInvoker(propertyName);
       if (invoker instanceof MethodInvoker) {
         Field declaredMethod = MethodInvoker.class.getDeclaredField("method");
@@ -169,16 +197,30 @@ public class MetaClass {
   }
 
   private StringBuilder buildProperty(String name, StringBuilder builder) {
+    /**
+     * buildProperty 方法会通过PropertyTokenizer解析复杂的属性表达式
+     *
+     * 假设name= tele.num。   当前类是User，user中有一个 tele属性，类型是电话类， 这个Tele类内部有一个String类型的num属性
+     *
+     * 解析 User类中 的tele.num这个属性表达式， 首先将tele.num 交给PropertyTokenizer，
+     * PropertyTokenizer 会判断表达式中含有. ,因此提取点号之前的tele作为name，点号之后的部分作为 child。
+     * prop.hasNext 就是判断是否有子表达式。
+     * prop.getName 就是得到了tele
+     * prop.getChildren就是得到了num
+     */
     PropertyTokenizer prop = new PropertyTokenizer(name);
-    if (prop.hasNext()) {
+    if (prop.hasNext()) {//是否有子表达式
       String propertyName = reflector.findPropertyName(prop.getName());
       if (propertyName != null) {
-        builder.append(propertyName);
+        builder.append(propertyName);//追加属性名
         builder.append(".");
+        //为该属性创建对应的MetaClass对象
         MetaClass metaProp = metaClassForProperty(propertyName);
+        //递归解析PropertyTokenizer.child字段，并将解析结果添加到build中保存。
         metaProp.buildProperty(prop.getChildren(), builder);
       }
     } else {
+      //递归出口
       String propertyName = reflector.findPropertyName(name);
       if (propertyName != null) {
         builder.append(propertyName);

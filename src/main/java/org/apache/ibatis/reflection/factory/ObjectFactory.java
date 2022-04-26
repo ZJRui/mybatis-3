@@ -25,6 +25,7 @@ import java.util.Properties;
  */
 public interface ObjectFactory {
 
+
   /**
    * Sets configuration properties.
    * @param properties configuration properties
@@ -35,6 +36,8 @@ public interface ObjectFactory {
 
   /**
    * Creates a new object with default constructor.
+   *
+   * 通过无参数构造器 创建指定类型的对象
    *
    * @param <T>
    *          the generic type

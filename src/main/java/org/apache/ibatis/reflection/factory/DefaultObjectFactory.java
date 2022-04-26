@@ -55,6 +55,9 @@ public class DefaultObjectFactory implements ObjectFactory, Serializable {
 
   private  <T> T instantiateClass(Class<T> type, List<Class<?>> constructorArgTypes, List<Object> constructorArgs) {
     try {
+      /**
+       * 选择合适的构造器实例化对象
+       */
       Constructor<T> constructor;
       if (constructorArgTypes == null || constructorArgs == null) {
         constructor = type.getDeclaredConstructor();
@@ -69,6 +72,7 @@ public class DefaultObjectFactory implements ObjectFactory, Serializable {
           }
         }
       }
+      //根据指定的参数列表，查找构造函数，并实例化对象
       constructor = type.getDeclaredConstructor(constructorArgTypes.toArray(new Class[0]));
       try {
         return constructor.newInstance(constructorArgs.toArray(new Object[0]));

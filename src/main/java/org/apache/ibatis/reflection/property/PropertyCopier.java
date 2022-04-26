@@ -24,6 +24,9 @@ import org.apache.ibatis.reflection.Reflector;
  */
 public final class PropertyCopier {
 
+  /**
+   * 属性拷贝，
+   */
   private PropertyCopier() {
     // Prevent Instantiation of Static Class
   }

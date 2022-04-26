@@ -23,7 +23,9 @@ import java.util.Map;
  * @author Clinton Begin
  */
 public enum JdbcType {
-  /*
+  /**
+   * 数据库类型 SQL types, called JDBC types.
+   * ----
    * This is added to enable basic support for the
    * ARRAY data type - but a custom type handler is still required
    */

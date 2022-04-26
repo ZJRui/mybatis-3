@@ -52,6 +52,24 @@ public class UnpooledDataSource implements DataSource {
   private Integer defaultNetworkTimeout;
 
   static {
+    /**
+     *
+     * DriverManager的静态代码 中会执行 loadInitialDrivers  使用SPI机制  将classpath 下的services目录下的驱动实现类加载出来。
+     *
+     * com.mysql.jdbc.Driver 中 也有  如下 静态代码 ：主动将Mysql Driver注册到DriverManager中
+     *
+     * static{
+     *
+     *    try{
+     *      DriverManager.registerDriver(new Driver());//向 DriverManager中注册 JDBC驱动
+     *    }catch(){}
+     *
+     * }
+     *
+     * UnpooledDataSource加载时会通过该静态代码块 将已经在DriverManager中注册的Jdbc Driver复制一份到  UnpooledDataSource registeredDrivers集合中。
+     *
+     *
+     */
     Enumeration<Driver> drivers = DriverManager.getDrivers();
     while (drivers.hasMoreElements()) {
       Driver driver = drivers.nextElement();
@@ -220,7 +238,9 @@ public class UnpooledDataSource implements DataSource {
   }
 
   private Connection doGetConnection(Properties properties) throws SQLException {
+    //初始化数据库驱动，问题：那么多驱动 Driver实现，将会使用哪个驱动呢？
     initializeDriver();
+    //创建真正的数据库连接
     Connection connection = DriverManager.getConnection(url, properties);
     configureConnection(connection);
     return connection;
@@ -237,8 +257,11 @@ public class UnpooledDataSource implements DataSource {
         }
         // DriverManager requires the driver to be loaded via the system ClassLoader.
         // http://www.kfu.com/~nsayer/Java/dyn-jdbc.html
+        //创建 Driver对象
         Driver driverInstance = (Driver) driverType.getDeclaredConstructor().newInstance();
+        // 注册驱动 DriverProxy是定义在UnpooledDataSource中的内部类，是Driver的静态代理类
         DriverManager.registerDriver(new DriverProxy(driverInstance));
+        //将驱动添加到registerDrivers 中。
         registeredDrivers.put(driver, driverInstance);
       } catch (Exception e) {
         throw new SQLException("Error setting driver on UnpooledDataSource. Cause: " + e);
@@ -251,8 +274,11 @@ public class UnpooledDataSource implements DataSource {
       conn.setNetworkTimeout(Executors.newSingleThreadExecutor(), defaultNetworkTimeout);
     }
     if (autoCommit != null && autoCommit != conn.getAutoCommit()) {
+      //设置事务是否自动提交
       conn.setAutoCommit(autoCommit);
     }
+    //设置事务隔离级别
+
     if (defaultTransactionIsolationLevel != null) {
       conn.setTransactionIsolation(defaultTransactionIsolationLevel);
     }

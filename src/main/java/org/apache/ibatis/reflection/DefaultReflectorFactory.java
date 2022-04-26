@@ -21,7 +21,13 @@ import java.util.concurrent.ConcurrentMap;
 import org.apache.ibatis.util.MapUtil;
 
 public class DefaultReflectorFactory implements ReflectorFactory {
+  /**
+   * 决定是否开启对Reflector对象的缓存
+   */
   private boolean classCacheEnabled = true;
+  /**
+   * 实现对reflector对象的缓存
+   */
   private final ConcurrentMap<Class<?>, Reflector> reflectorMap = new ConcurrentHashMap<>();
 
   public DefaultReflectorFactory() {

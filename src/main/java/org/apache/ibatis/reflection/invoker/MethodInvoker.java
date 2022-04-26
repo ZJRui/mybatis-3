@@ -25,6 +25,11 @@ import org.apache.ibatis.reflection.Reflector;
  */
 public class MethodInvoker implements Invoker {
 
+  /**
+   *    * GetFieldInvoker 通过field字段封装了对应的Field对象。     invoke方法中会调用 field.get/set
+   *    *
+   *    * methodInvoker通过method字段封装了对应的Method对象， invoke方法会调用method.invoke
+   */
   private final Class<?> type;
   private final Method method;
 

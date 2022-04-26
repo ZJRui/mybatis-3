@@ -53,12 +53,22 @@ public final class PreparedStatementLogger extends BaseJdbcLogger implements Inv
         }
         clearColumnInfo();
         if ("executeQuery".equals(method.getName())) {
+          /**
+           * 如果调用executeQuery方法，则为ResultSet 创建代理对象
+           */
           ResultSet rs = (ResultSet) method.invoke(statement, params);
+          /**
+           * 为ResultSet创建代理对象
+           */
           return rs == null ? null : ResultSetLogger.newInstance(rs, statementLog, queryStack);
         } else {
           return method.invoke(statement, params);
         }
       } else if (SET_METHODS.contains(method.getName())) {
+        /**
+         * 如果调用 set_methods集合中的方法，则通过setColumn方法记录到BaseJdbcLogger中定义的三个 column* 集合。
+         *
+         */
         if ("setNull".equals(method.getName())) {
           setColumn(params[0], null);
         } else {
@@ -67,6 +77,9 @@ public final class PreparedStatementLogger extends BaseJdbcLogger implements Inv
         return method.invoke(statement, params);
       } else if ("getResultSet".equals(method.getName())) {
         ResultSet rs = (ResultSet) method.invoke(statement, params);
+        /**
+         * 为ResultSet创建代理对象
+         */
         return rs == null ? null : ResultSetLogger.newInstance(rs, statementLog, queryStack);
       } else if ("getUpdateCount".equals(method.getName())) {
         int updateCount = (Integer) method.invoke(statement, params);

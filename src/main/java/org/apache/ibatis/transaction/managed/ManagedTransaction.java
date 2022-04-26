@@ -36,6 +36,10 @@ import org.apache.ibatis.transaction.Transaction;
  * @see ManagedTransactionFactory
  */
 public class ManagedTransaction implements Transaction {
+  /**
+   * 这个类的commit rollback方法都是空实现，事务的 提交和回滚都是依靠容器管理的。
+   *
+   */
 
   private static final Log log = LogFactory.getLog(ManagedTransaction.class);
 
@@ -75,6 +79,9 @@ public class ManagedTransaction implements Transaction {
 
   @Override
   public void close() throws SQLException {
+    /**
+     * 通过closeConnection字段的值控制数据库连接的关闭行为
+     */
     if (this.closeConnection && this.connection != null) {
       if (log.isDebugEnabled()) {
         log.debug("Closing JDBC Connection [" + this.connection + "]");
