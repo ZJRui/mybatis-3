@@ -46,7 +46,18 @@ import org.apache.ibatis.session.SqlSession;
  */
 public class MapperMethod {
 
+  /**
+   * MapperMethod 中封装了Mapper接口中对应的方法信息，以及对应sql语句的信息
+   *
+   * sqlCommand 记录了sql语句的名称和类型
+   *
+   * SqlCommand 是mapperMethod中定义的内部类，他使用name字段记录了sql语句的名称，使用type字段记录语句类型。
+   *
+   */
   private final SqlCommand command;
+  /**
+   * Mapper 接口中对应的方法的相关的信息
+   */
   private final MethodSignature method;
 
   public MapperMethod(Class<?> mapperInterface, Method method, Configuration config) {
@@ -222,11 +233,17 @@ public class MapperMethod {
     private final SqlCommandType type;
 
     public SqlCommand(Configuration configuration, Class<?> mapperInterface, Method method) {
+      /**
+       * sql语句的名称 由mapper接口的名称与对应的方法名称组成
+       */
       final String methodName = method.getName();
       final Class<?> declaringClass = method.getDeclaringClass();
       MappedStatement ms = resolveMappedStatement(mapperInterface, methodName, declaringClass,
           configuration);
       if (ms == null) {
+        /**
+         * 处理@Flush注解
+         */
         if (method.getAnnotation(Flush.class) != null) {
           name = null;
           type = SqlCommandType.FLUSH;
@@ -253,12 +270,23 @@ public class MapperMethod {
 
     private MappedStatement resolveMappedStatement(Class<?> mapperInterface, String methodName,
         Class<?> declaringClass, Configuration configuration) {
+      //sql语句的名称 由mapper接口的名称与对应的方法名称组成
       String statementId = mapperInterface.getName() + "." + methodName;
+      /**
+       * 检测是否有该名称的sql语句
+       */
       if (configuration.hasStatement(statementId)) {
+        /**
+         * 从configuration的mapperStatements集合中查找对应的MapperStatement对象
+         * MapperStatement对象中封装了SQL语句相关的信息，在mybatis初始化时创建
+         */
         return configuration.getMappedStatement(statementId);
       } else if (mapperInterface.equals(declaringClass)) {
         return null;
       }
+      /**
+       * 如果指定的方法是在父接口中定义的。 则在此处进行集成结构处理
+       */
       for (Class<?> superInterface : mapperInterface.getInterfaces()) {
         if (declaringClass.isAssignableFrom(superInterface)) {
           MappedStatement ms = resolveMappedStatement(superInterface, methodName,
@@ -283,6 +311,13 @@ public class MapperMethod {
     private final String mapKey;
     private final Integer resultHandlerIndex;
     private final Integer rowBoundsIndex;
+    /**
+     * 使用ParamNameResolver处理Mapper接口中定义的方法的参数列表。
+     * ParamNameResolver使用name字段（sortedMap<Integer,String>) 记录了参数在参数列表中的位置索引 和参数名称之间的关系
+     * key表示参数在参数列表中的索引位置，value表示参数名称 参数名称可以通过@Param注解指定，如果没有指定@Param注解，则使用参数索引作为其名称。
+     * 如果参数列表中包含RowBounds类型或ResultSet类型的参数，则这两种类型的参数不会被记录到name集合中，这就会导致参数索引与名称不一致。例如
+     * methodA(int a, RowBounds rb , int b) 方法对应你的names集合中为{{0,"0"},{2,"1"}}
+     */
     private final ParamNameResolver paramNameResolver;
 
     public MethodSignature(Configuration configuration, Class<?> mapperInterface, Method method) {

@@ -41,8 +41,19 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
       | MethodHandles.Lookup.PACKAGE | MethodHandles.Lookup.PUBLIC;
   private static final Constructor<Lookup> lookupConstructor;
   private static final Method privateLookupInMethod;
+
   private final SqlSession sqlSession;
+  /**
+   * Mapper接口对应的 class对象
+   */
   private final Class<T> mapperInterface;
+  /**
+   * 用于缓存MapperMethod对象，其中key是mapper接口中方法对应的Method对象，value是对应的mapperMethod对象
+   *
+   * MapperMethod对象会完成参数转换以及sql语句的执行功能
+   * 需要注意的是，MapperMethod中并不记录任何状态相关的信息，所以可以在多个代理对象之间共享
+   *
+   */
   private final Map<Method, MapperMethodInvoker> methodCache;
 
   public MapperProxy(SqlSession sqlSession, Class<T> mapperInterface, Map<Method, MapperMethodInvoker> methodCache) {
@@ -83,6 +94,9 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
       if (Object.class.equals(method.getDeclaringClass())) {
         return method.invoke(this, args);
       } else {
+        /**
+         * 从缓存中取出MapperMethod对象，如果缓存中没有 则创建新的MapperMethod对象并添加到缓存中。
+         */
         return cachedInvoker(method).invoke(proxy, method, args, sqlSession);
       }
     } catch (Throwable t) {
