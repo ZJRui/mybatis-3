@@ -33,13 +33,26 @@ import org.apache.ibatis.session.Configuration;
  */
 public final class MappedStatement {
 
+
+  /**
+   *  SqlSource 接口 根据映射文件或注解描述的sql语句，以及传入的参数，返回可执行的sql
+   *
+   *  MappedStatement表示映射配置文件中定义的sql节点， MappedStatement包含了这些节点的很多属性。
+   *
+   */
+
+  //节点中的id属性 包括命名空间前缀
   private String resource;
+
   private Configuration configuration;
   private String id;
   private Integer fetchSize;
   private Integer timeout;
   private StatementType statementType;
   private ResultSetType resultSetType;
+  /**
+   * 对应一条sql语句
+   */
   private SqlSource sqlSource;
   private Cache cache;
   private ParameterMap parameterMap;

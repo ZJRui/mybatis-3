@@ -49,16 +49,56 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
  */
 public abstract class BaseExecutor implements Executor {
 
+  /**
+   * Executor主要负责维护一级缓存和二级缓存并提供事务管理 ，他会将数据库相关操作委托给StatementHandler完成。
+   * CachingExecutor扮演了装饰器的角色，为Executor添加了二级缓存。
+   * BaseExecutor 主要提供了缓存管理和事务管理的功能
+   * StatementHandler 首先通过ParameterHandler完成sql语句的实参绑定，然后通过java.sql.Statement对象执行sql语句并得到结果集，最后通过ResultSetHandler完成结果集的映射得到结果对象并返回
+   *
+   *
+   * StatmentHandler ：创建Statement对象，为sql语句绑定实参，执行select insert udpate delete   将结果集映射成结果对象
+   *
+   */
   private static final Log log = LogFactory.getLog(BaseExecutor.class);
 
+  /**
+   * 事务对象，实现事务提交回滚关闭等
+   */
   protected Transaction transaction;
+
   protected Executor wrapper;
 
+  /**
+   * 延迟加载队列
+   */
   protected ConcurrentLinkedQueue<DeferredLoad> deferredLoads;
+  /**
+   * 一级缓存，用于缓存该Executor对象查询结果集映射到的结果对象，
+   *
+   * 1.一级缓存  ：一级缓存是会话级别的缓存，在MyBatis中每创建一个SqlSession对象就表示开启一次数据库会话
+   *
+   * Mybatis中的sqlSession是通过Executor对象完成数据库操作的，为了避免同一个事务内反复执行完全相同的查询语句。在executor中会建立一个简单的以及缓存
+   *
+   * 他会将每次查询结果对象缓存起来。
+   * 一级缓存的生命周期与sqlsession相同，其实也就是与sqlSession中封装的Executor对象的生命周期相同。 当调用Executor对象的close方法时，
+   * 该Executor对象对应的一级缓存变得不可用。 一级缓存中对象的存活事件受多方面的影响，比如execute update rollback commit 方法也会清空一级缓存。
+   * query方法会根据flushCache属性 决定是否清空一级缓存
+   * 一级缓存默认是开启的。
+   *
+   *
+   * baseExecutor的query方法会首先创建cacheKey对象，并根据该cacheKey对象查找一级缓存。
+   *
+   */
   protected PerpetualCache localCache;
+  /**
+   * 一级缓存，用于缓存输出类型的参数
+   */
   protected PerpetualCache localOutputParameterCache;
   protected Configuration configuration;
 
+  /**
+   * 用来记录嵌套查询的层数
+   */
   protected int queryStack;
   private boolean closed;
 
@@ -238,9 +278,18 @@ public abstract class BaseExecutor implements Executor {
     if (closed) {
       throw new ExecutorException("Cannot commit, transaction is already closed");
     }
+    /**
+     * 先清空一级缓存
+     */
     clearLocalCache();
+    /**
+     * BathExecutor的实现中可以缓存多条sql语句，等待何时的时机将缓存的多条sql语句一并发送到数据库执行。
+     * flushStatements方法主要是针对批处理多条sql语句的。  他会调用doFlushStatements这个基本方法处理Executor中缓存的多条sql语句。
+     *
+     */
     flushStatements();
     if (required) {
+      //根据参数决定是否真正提交事务
       transaction.commit();
     }
   }

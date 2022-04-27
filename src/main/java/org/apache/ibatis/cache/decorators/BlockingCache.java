@@ -37,6 +37,9 @@ import org.apache.ibatis.cache.CacheException;
 public class BlockingCache implements Cache {
 
   private long timeout;
+  /**
+   * 装饰器模式中  被装饰的底层cache对象
+   */
   private final Cache delegate;
   private final ConcurrentHashMap<Object, CountDownLatch> locks;
 
@@ -90,6 +93,9 @@ public class BlockingCache implements Cache {
     CountDownLatch newLatch = new CountDownLatch(1);
     while (true) {
       CountDownLatch latch = locks.putIfAbsent(key, newLatch);
+      /**
+       * latch 为null 则表示原来locks中（1）没有key （2）或者是 key对应的value为null
+       */
       if (latch == null) {
         break;
       }

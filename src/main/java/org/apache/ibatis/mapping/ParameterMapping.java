@@ -26,14 +26,33 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
  * @author Clinton Begin
  */
 public class ParameterMapping {
+  /**
+   * 记录了 #{} 占位符中的参数属性
+   */
 
   private Configuration configuration;
 
+  /**
+   * 传进来的参数name
+   */
   private String property;
+  /**
+   * 输入擦拿书还是输出参数
+   */
   private ParameterMode mode;
+  /**
+   * 参数的java类型
+   */
   private Class<?> javaType = Object.class;
+  /**
+   * 参数的jdbc类可行
+   */
   private JdbcType jdbcType;
+  /**
+   * 浮点精度
+   */
   private Integer numericScale;
+
   private TypeHandler<?> typeHandler;
   private String resultMapId;
   private String jdbcTypeName;

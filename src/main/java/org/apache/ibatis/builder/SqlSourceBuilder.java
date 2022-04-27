@@ -41,7 +41,19 @@ public class SqlSourceBuilder extends BaseBuilder {
   }
 
   public SqlSource parse(String originalSql, Class<?> parameterType, Map<String, Object> additionalParameters) {
+    /**
+     * 第一个参数是经过sqlNode的apply方法处理之后的sql语句
+     * 第二个参数是用户传入的实参类型
+     * 第三个参数记录了形参和实参的对应关系，其实就是经过sqlNode.apply方法处理后的dynamiccontext。bindings集合
+     *
+     * --------
+     * 创建parameterMappingTokenHandler对象，他是解析"#{}"占位符中的参数属性以及替换占位符 的核心
+     *
+     */
     ParameterMappingTokenHandler handler = new ParameterMappingTokenHandler(configuration, parameterType, additionalParameters);
+    /**
+     * 解析 #{}
+     */
     GenericTokenParser parser = new GenericTokenParser("#{", "}", handler);
     String sql;
     if (configuration.isShrinkWhitespacesInSql()) {
@@ -49,6 +61,9 @@ public class SqlSourceBuilder extends BaseBuilder {
     } else {
       sql = parser.parse(originalSql);
     }
+    /**
+     * 创建StaticSqlSource，其中封装了占位符被替换成？ 的语句以及参数对应的parameterMapping集合
+     */
     return new StaticSqlSource(configuration, sql, handler.getParameterMappings());
   }
 

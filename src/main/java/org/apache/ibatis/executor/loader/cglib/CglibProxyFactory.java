@@ -92,11 +92,41 @@ public class CglibProxyFactory implements ProxyFactory {
 
   private static class EnhancedResultObjectProxyImpl implements MethodInterceptor {
 
+    /**
+     *
+     *   创建代理三种方式：
+     *   1，JDK动态带来
+     * 2.Cglib
+     * //在使用cglib创建动态代理类是，首先需要定义一个callback接口的实现类，cglib中也提供了多个callback接口的子接口//比如Dispatcher LazyLoader MethodInterceptor NoOp   InvocationHandler  ProxyRefDispatcher FixedValue，下面的DynamicAdvisedInterceptor就是MethodInterceptor的实现Callback aopInterceptor = new DynamicAdvisedInterceptor(this.advised);
+     * enhancer.setSuperClass(class)
+     * enhancer.setCallback(DynamicAdvisedInterceptor)
+     * return  enhancer.create()//通过字节码技术动态创建子类实例
+     *
+     * 3.javassist 是开源的 字节码生成类库，可以动态生成类。
+     * Javassist通过创建目标类的子类地方昂视实现动态代理功能
+     *
+     * ---------------
+     *   EnhancedResultObjectProxyImpl 实现了 cglib的MethodInterceptor
+     */
+
+    /**
+     * 需要创建代理的目标类
+     */
     private final Class<?> type;
+    /**
+     * ResultLoaderMap对象，其中记录了延迟加载的属性名称和对应的resultLoader对象之间的关系
+     */
     private final ResultLoaderMap lazyLoader;
+
     private final boolean aggressive;
+    /**
+     * 触发延迟加载的方法名列表，如果调用了该列表中的方法，则对全部的延迟加载属性进行加载操作
+     */
     private final Set<String> lazyLoadTriggerMethods;
     private final ObjectFactory objectFactory;
+    /**
+     * 创建代理对象时，使用的构造方法的参数类型和参数值
+     */
     private final List<Class<?>> constructorArgTypes;
     private final List<Object> constructorArgs;
 
@@ -114,6 +144,7 @@ public class CglibProxyFactory implements ProxyFactory {
       final Class<?> type = target.getClass();
       EnhancedResultObjectProxyImpl callback = new EnhancedResultObjectProxyImpl(type, lazyLoader, configuration, objectFactory, constructorArgTypes, constructorArgs);
       Object enhanced = crateProxy(type, callback, constructorArgTypes, constructorArgs);
+      //将 target对象中的属性值复制到代理对象的对应属性中。
       PropertyCopier.copyBeanProperties(type, target, enhanced);
       return enhanced;
     }
@@ -137,6 +168,9 @@ public class CglibProxyFactory implements ProxyFactory {
               return original;
             }
           } else {
+            /**
+             * 检测是否存在延迟加载的属性，以及调用方法名是否为finalize
+             */
             if (lazyLoader.size() > 0 && !FINALIZE_METHOD.equals(methodName)) {
               if (aggressive || lazyLoadTriggerMethods.contains(methodName)) {
                 lazyLoader.loadAll();
@@ -144,6 +178,9 @@ public class CglibProxyFactory implements ProxyFactory {
                 final String property = PropertyNamer.methodToProperty(methodName);
                 lazyLoader.remove(property);
               } else if (PropertyNamer.isGetter(methodName)) {
+                /**
+                 * 如果调用了某属性的getter方法，先获取该属性的名称
+                 */
                 final String property = PropertyNamer.methodToProperty(methodName);
                 if (lazyLoader.hasLoader(property)) {
                   lazyLoader.load(property);
@@ -152,6 +189,7 @@ public class CglibProxyFactory implements ProxyFactory {
             }
           }
         }
+        //调用目标对象的方法
         return methodProxy.invokeSuper(enhanced, args);
       } catch (Throwable t) {
         throw ExceptionUtil.unwrapThrowable(t);

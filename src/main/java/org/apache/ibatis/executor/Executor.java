@@ -31,6 +31,17 @@ import org.apache.ibatis.transaction.Transaction;
  * @author Clinton Begin
  */
 public interface Executor {
+  /**
+   * Executor主要负责维护一级缓存和二级缓存并提供事务管理 ，他会将数据库相关操作委托给StatementHandler完成。
+   * CachingExecutor扮演了装饰器的角色，为Executor添加了二级缓存。
+   * BaseExecutor 主要提供了缓存管理和事务管理的功能
+   * StatementHandler 首先通过ParameterHandler完成sql语句的实参绑定，然后通过java.sql.Statement对象执行sql语句并得到结果集，最后通过ResultSetHandler完成结果集的映射得到结果对象并返回
+   *
+   *
+   * StatmentHandler ：创建Statement对象，为sql语句绑定实参，执行select insert udpate delete   将结果集映射成结果对象
+   *
+   */
+
 
   ResultHandler NO_RESULT_HANDLER = null;
 

@@ -100,6 +100,10 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
  */
 public class Configuration {
 
+  /**
+   * 配置文件中 可以配置多个<environment>节点，每个environment‘对应一种环境配置。
+   * 尽管可以配置多个环境。 每个sqlSessionFactory实例只能选择其一
+   */
   protected Environment environment;
 
   protected boolean safeRowBoundsEnabled;
@@ -155,6 +159,9 @@ public class Configuration {
   protected final Map<String, MappedStatement> mappedStatements = new StrictMap<MappedStatement>("Mapped Statements collection")
       .conflictMessageProducer((savedValue, targetValue) ->
           ". please check " + savedValue.getResource() + " and " + targetValue.getResource());
+  /**
+   * cahed 的id作为key ，cache对象作为value
+   */
   protected final Map<String, Cache> caches = new StrictMap<>("Caches collection");
   protected final Map<String, ResultMap> resultMaps = new StrictMap<>("Result Maps collection");
   protected final Map<String, ParameterMap> parameterMaps = new StrictMap<>("Parameter Maps collection");
@@ -1009,15 +1016,29 @@ public class Configuration {
     @Override
     @SuppressWarnings("unchecked")
     public V put(String key, V value) {
+      /**
+       * 如果检测到key重复则抛出异常， 如果没有重复的key则添加key以及value，同时会根据key产生shortKey
+       *
+       */
       if (containsKey(key)) {
         throw new IllegalArgumentException(name + " already contains value for " + key
             + (conflictMessageProducer == null ? "" : conflictMessageProducer.apply(super.get(key), value)));
       }
       if (key.contains(".")) {
+        //按照 “.” 将key分成数组，并将数组的最后一项作为shortKey
         final String shortKey = getShortName(key);
         if (super.get(shortKey) == null) {
+          //如果不包含指定的shortKey，则添加该键值对
           super.put(shortKey, value);
         } else {
+          //如果该shortKey已经存在，则将value修改成 Ambiguity对象
+          /**
+           * Ambiguity 是strictMap中定义的静态内部类。 他表示的是存在二义性的键值对。
+           * Ambiguity中使用subject字段记录了存在二义性的key，并提供了相应 的getter方法
+           *
+           * Strictmap的get方法会检测value 是否存在以及value是否为Ambiguity类型的对象，如果满足这两个条件中的任意一个
+           * 则抛出异常
+           */
           super.put(shortKey, (V) new Ambiguity(shortKey));
         }
       }

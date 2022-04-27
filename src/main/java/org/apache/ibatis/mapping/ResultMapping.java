@@ -30,20 +30,69 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
  */
 public class ResultMapping {
 
+  /**
+   * ResultMap xml节点 下的子节点 会被解析成ResultMapping对象
+   */
   private Configuration configuration;
+  /**
+   * Java Bean 属性的名称
+   */
   private String property;
+  /**
+   * 数据库查询得到的列名
+   */
   private String column;
+  /**
+   * JavaBean的完全限定名
+   */
   private Class<?> javaType;
+  /**
+   * 数据库jdbc类型
+   */
   private JdbcType jdbcType;
+  /**
+   * 对应节点的typeHandler属性，表示的是类型处理器，他会覆盖默认的类型处理器，
+   */
   private TypeHandler<?> typeHandler;
+  /**
+   * 对应节点的resultMap属性，这个属性通过id引用了另外一个<resultMap>节点定义，他负责将结果集中的一部分列
+   * 映射成其他关联的结果对象。 这样我们可以通过join方式进行关联查询， 然后直接映射成多个对象，并同时
+   * 设置这些对象之间的组合关系
+   *
+   */
   private String nestedResultMapId;
+  /**
+   * 对应节点的select属性， 该属性通过id应用了另外一个select节点的定义，他会把指定的列的值传入select属性
+   * 指定的select语句中作为参数进行查询。 如果使用select属性可以会导致N+1问题
+   */
   private String nestedQueryId;
+  /**
+   * 对应节点的notNullColumn属性拆分后的 结果
+   */
   private Set<String> notNullColumns;
+  /**
+   * 对应节点的columnPrefix属性
+   */
   private String columnPrefix;
+  /**
+   * 处理后的标志，标志共两个： id和constructor
+   */
   private List<ResultFlag> flags;
+  /***
+   * 对应节点的column属性拆分后生成的结果 composites.size>0会使 column为null
+   */
   private List<ResultMapping> composites;
+  /**
+   * 对应节点的resultSet属性
+   */
   private String resultSet;
+  /**
+   * 对应节点的 foreignColumnn属性
+   */
   private String foreignColumn;
+  /**
+   * 是否延迟加载
+   */
   private boolean lazy;
 
   ResultMapping() {

@@ -30,6 +30,9 @@ import org.apache.ibatis.session.Configuration;
  * @author Clinton Begin
  */
 public class DynamicContext {
+  /**
+   * 记录解析动态sql语句之后产生的sql语句片段
+   */
 
   public static final String PARAMETER_OBJECT_KEY = "_parameter";
   public static final String DATABASE_ID_KEY = "_databaseId";
@@ -38,18 +41,41 @@ public class DynamicContext {
     OgnlRuntime.setPropertyAccessor(ContextMap.class, new ContextAccessor());
   }
 
+  /**
+   * 参数上下文，contextmap集成自hashmap
+   */
   private final ContextMap bindings;
+  /**
+   * 在sqlNode解析动态sql时，会将解析后的sql语句片段添加到属性中保存，最终拼凑出一条完整的sql语句
+   *
+   */
   private final StringJoiner sqlBuilder = new StringJoiner(" ");
   private int uniqueNumber = 0;
 
   public DynamicContext(Configuration configuration, Object parameterObject) {
+    /**
+     *
+     * parameterObject 是运行时用户传入的参数。 其中包含了后续用于替换 "#{}" 占位符的实参。
+     *
+     */
     if (parameterObject != null && !(parameterObject instanceof Map)) {
+      //对于非Map类型的参数，会创建对应的MetaObject并封装成ContextMap对象。
+
       MetaObject metaObject = configuration.newMetaObject(parameterObject);
       boolean existsTypeHandler = configuration.getTypeHandlerRegistry().hasTypeHandler(parameterObject.getClass());
+      /**
+       * 初始化bindings集合
+       */
       bindings = new ContextMap(metaObject, existsTypeHandler);
     } else {
       bindings = new ContextMap(null, false);
     }
+    /**
+     *
+     * 将 parameter_object_key-> parameterObject  这一对应关系添加到 bindings 集合中，其中 parameter_object_key的
+     * 值是"_parameter"在有的sqlNode实现中直接使用了该面值。
+     *
+     */
     bindings.put(PARAMETER_OBJECT_KEY, parameterObject);
     bindings.put(DATABASE_ID_KEY, configuration.getDatabaseId());
   }

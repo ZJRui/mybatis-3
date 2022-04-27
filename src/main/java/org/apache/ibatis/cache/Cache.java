@@ -42,6 +42,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 public interface Cache {
 
   /**
+   * 该缓存对象的id
    * @return The identifier of this cache
    */
   String getId();

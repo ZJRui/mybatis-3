@@ -46,6 +46,23 @@ import org.apache.ibatis.session.SqlSession;
  * @author Clinton Begin
  */
 public class DefaultSqlSession implements SqlSession {
+  /**
+   * DefaultSqlSession 中使用到了策略模式，DefaultSqlSession扮演了Context的角色，而将所有数据库相关的操作全部封装到了Executor接口的实现中。
+   * 并通过executor字段选择不同的Executor实现
+   *
+   *
+   * MyBatis的执行原理
+   *  UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
+   *                   User user = new User("tom",new Integer(5));
+   *                   userMapper.insertUser(user);
+   *
+   * 首先你要有一个sqlSession对象，SQLSqlSession对象，SqlSession对象中持有executor。
+   * 然后为Mapper接口创建JDK动态代理对象，指定了InvocationHandler为MapperProxy，创建代理对象的时候将sqlsession交给了InvocationHandler。
+   * InvocationHandler拦截到方法执行后，根据被调用方法的签名找到对应的MapperMethod，
+   * 然后执行其execute方法，execute方法中会使用sqlSession执行对应的方法。DefaultSqlSession 中使用到了策略模式，DefaultSqlSession扮演了Context的角色，而将所有数据库相关的操作全部封装到了Executor接口的实现中。并通过executor字段选择不同的Executor实现
+   *
+   *
+   */
 
   private final Configuration configuration;
   private final Executor executor;

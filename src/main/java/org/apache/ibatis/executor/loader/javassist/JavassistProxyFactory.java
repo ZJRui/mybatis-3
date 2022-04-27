@@ -114,6 +114,22 @@ public class JavassistProxyFactory implements org.apache.ibatis.executor.loader.
 
     public static Object createProxy(Object target, ResultLoaderMap lazyLoader, Configuration configuration, ObjectFactory objectFactory, List<Class<?>> constructorArgTypes, List<Object> constructorArgs) {
       final Class<?> type = target.getClass();
+      /**
+       * 下面创建了一个EnhancedResultObjectProxyImpl  ,这个 EnhancedResultObjectProxyImpl 是Javasisit的MethodHandler
+       *
+       *   *   创建代理三种方式：
+       *      *   1，JDK动态带来
+       *      * 2.Cglib
+       *      * //在使用cglib创建动态代理类是，首先需要定义一个callback接口的实现类，cglib中也提供了多个callback接口的子接口//比如Dispatcher LazyLoader MethodInterceptor NoOp   InvocationHandler  ProxyRefDispatcher FixedValue，下面的DynamicAdvisedInterceptor就是MethodInterceptor的实现Callback aopInterceptor = new DynamicAdvisedInterceptor(this.advised);
+       *      * enhancer.setSuperClass(class)
+       *      * enhancer.setCallback(DynamicAdvisedInterceptor)
+       *      * return  enhancer.create()//通过字节码技术动态创建子类实例
+       *      *
+       *      * 3.javassist 是开源的 字节码生成类库，可以动态生成类。
+       *      * Javassist通过创建目标类的子类地方昂视实现动态代理功能
+       *
+       *
+       */
       EnhancedResultObjectProxyImpl callback = new EnhancedResultObjectProxyImpl(type, lazyLoader, configuration, objectFactory, constructorArgTypes, constructorArgs);
       Object enhanced = crateProxy(type, callback, constructorArgTypes, constructorArgs);
       PropertyCopier.copyBeanProperties(type, target, enhanced);

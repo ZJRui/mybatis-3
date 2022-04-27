@@ -64,6 +64,9 @@ public class ReuseExecutor extends BaseExecutor {
   protected <E> Cursor<E> doQueryCursor(MappedStatement ms, Object parameter, RowBounds rowBounds, BoundSql boundSql) throws SQLException {
     Configuration configuration = ms.getConfiguration();
     StatementHandler handler = configuration.newStatementHandler(wrapper, ms, parameter, rowBounds, null, boundSql);
+    /**
+     * SimpleExecutor 的doQuery  doUpdate每次都会通过Jdbc Connection创建新的Statement对象，而ReuseExecutor会尝试重用StatementMap中缓存的Statement对象
+     */
     Statement stmt = prepareStatement(handler, ms.getStatementLog());
     return handler.queryCursor(stmt);
   }

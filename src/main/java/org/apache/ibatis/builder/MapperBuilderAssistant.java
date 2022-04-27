@@ -137,6 +137,11 @@ public class MapperBuilderAssistant extends BaseBuilder {
         .blocking(blocking)
         .properties(props)
         .build();
+    /**
+     * 创建cache 并肩其添加到configurations.caches集合中保存。
+     *
+     * cahed 的id作为key ，cache对象作为value
+     */
     configuration.addCache(cache);
     currentCache = cache;
     return cache;

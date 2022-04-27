@@ -15,22 +15,39 @@
  */
 package org.apache.ibatis.executor.resultset;
 
+import org.apache.ibatis.cursor.Cursor;
+
 import java.sql.CallableStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 
-import org.apache.ibatis.cursor.Cursor;
-
 /**
  * @author Clinton Begin
  */
 public interface ResultSetHandler {
-
+  /**
+   *
+   * Statementhandler 接口在执行完指定的select语句之后，会将查询得到的结果集交给Resultsethandler 完成映射处理。
+   * ResultSetHandler除了负责映射select语句查询得到的结果集， 还会处理存储过程执行后的输出参数
+   *
+   */
+  /**
+   * 处理结果集，生成响应的结果对象集合
+   * @param stmt
+   * @param <E>
+   * @return
+   * @throws SQLException
+   */
   <E> List<E> handleResultSets(Statement stmt) throws SQLException;
 
   <E> Cursor<E> handleCursorResultSets(Statement stmt) throws SQLException;
 
+  /**
+   * 处理存储过程的输出参数
+   * @param cs
+   * @throws SQLException
+   */
   void handleOutputParameters(CallableStatement cs) throws SQLException;
 
 }

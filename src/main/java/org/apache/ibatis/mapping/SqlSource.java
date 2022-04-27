@@ -22,7 +22,19 @@ package org.apache.ibatis.mapping;
  * @author Clinton Begin
  */
 public interface SqlSource {
+  /**
+   * SqlSource 接口表示映射文件 或注解定义的sql语句，但他表示的sql语句是不能直接被数据库执行的，因为其中可能含有动态sql语句相关的节点或者是占位符
+   * 需要解析的元素
+   */
 
+  /**
+   *  根据映射文件或注解描述的sql语句，以及传入的参数，返回可执行的sql
+   *
+   *  MappedStatement表示映射配置文件中定义的sql节点， MappedStatement包含了这些节点的很多属性。
+   *
+   * @param parameterObject
+   * @return
+   */
   BoundSql getBoundSql(Object parameterObject);
 
 }

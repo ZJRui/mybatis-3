@@ -15,24 +15,19 @@
  */
 package org.apache.ibatis.mapping;
 
+import org.apache.ibatis.builder.InitializingObject;
+import org.apache.ibatis.cache.Cache;
+import org.apache.ibatis.cache.CacheException;
+import org.apache.ibatis.cache.decorators.*;
+import org.apache.ibatis.cache.impl.PerpetualCache;
+import org.apache.ibatis.reflection.MetaObject;
+import org.apache.ibatis.reflection.SystemMetaObject;
+
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-
-import org.apache.ibatis.builder.InitializingObject;
-import org.apache.ibatis.cache.Cache;
-import org.apache.ibatis.cache.CacheException;
-import org.apache.ibatis.cache.decorators.BlockingCache;
-import org.apache.ibatis.cache.decorators.LoggingCache;
-import org.apache.ibatis.cache.decorators.LruCache;
-import org.apache.ibatis.cache.decorators.ScheduledCache;
-import org.apache.ibatis.cache.decorators.SerializedCache;
-import org.apache.ibatis.cache.decorators.SynchronizedCache;
-import org.apache.ibatis.cache.impl.PerpetualCache;
-import org.apache.ibatis.reflection.MetaObject;
-import org.apache.ibatis.reflection.SystemMetaObject;
 
 /**
  * @author Clinton Begin
@@ -90,15 +85,34 @@ public class CacheBuilder {
   }
 
   public Cache build() {
+    /**
+     * 如果implementions字段和decorators集合为空，则为其设置默认值， implementation默认值为 PerpetualCache.class
+     * decorestors 集合默认只包含 LruCache.class
+     */
     setDefaultImplementations();
+    /**
+     * 根据implementation指定的类型，通过反射获取参数为String类型的构造方法，并通过该构造方法创建Cache对象
+     *
+     */
     Cache cache = newBaseCacheInstance(implementation, id);
+    /**
+     * 根据cache节点下配置的property信息，初始化Cache对象
+     */
     setCacheProperties(cache);
+    /**
+     * 检测Cache对象的类型，如果是PerpetualCache类型，则为其添加decorators集合中的装饰器。
+     * 如果是自定义类型的Cache接口实现，则不添加decorators集合中的装饰器
+     */
     // issue #352, do not apply decorators to custom caches
     if (PerpetualCache.class.equals(cache.getClass())) {
       for (Class<? extends Cache> decorator : decorators) {
+        /**
+         * 通过反射获取参数为cache类型的构造方法，并通过该构造方法创建装饰器
+         */
         cache = newCacheDecoratorInstance(decorator, cache);
         setCacheProperties(cache);
       }
+      //添加mybatis中提供的标准装饰器
       cache = setStandardDecorators(cache);
     } else if (!LoggingCache.class.isAssignableFrom(cache.getClass())) {
       cache = new LoggingCache(cache);
@@ -150,25 +164,25 @@ public class CacheBuilder {
           if (String.class == type) {
             metaCache.setValue(name, value);
           } else if (int.class == type
-              || Integer.class == type) {
+            || Integer.class == type) {
             metaCache.setValue(name, Integer.valueOf(value));
           } else if (long.class == type
-              || Long.class == type) {
+            || Long.class == type) {
             metaCache.setValue(name, Long.valueOf(value));
           } else if (short.class == type
-              || Short.class == type) {
+            || Short.class == type) {
             metaCache.setValue(name, Short.valueOf(value));
           } else if (byte.class == type
-              || Byte.class == type) {
+            || Byte.class == type) {
             metaCache.setValue(name, Byte.valueOf(value));
           } else if (float.class == type
-              || Float.class == type) {
+            || Float.class == type) {
             metaCache.setValue(name, Float.valueOf(value));
           } else if (boolean.class == type
-              || Boolean.class == type) {
+            || Boolean.class == type) {
             metaCache.setValue(name, Boolean.valueOf(value));
           } else if (double.class == type
-              || Double.class == type) {
+            || Double.class == type) {
             metaCache.setValue(name, Double.valueOf(value));
           } else {
             throw new CacheException("Unsupported property type for cache: '" + name + "' of type " + type);

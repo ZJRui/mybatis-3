@@ -47,12 +47,23 @@ public class TextSqlNode implements SqlNode {
 
   @Override
   public boolean apply(DynamicContext context) {
+    /**
+     *
+     * TextSqlNode 表示的是包含了“${}”占位符的动态sql节点。   下面使用GenericTokenParser解析 占位符，并直接替换成用户给定的实际参数值。
+     *
+     */
     GenericTokenParser parser = createParser(new BindingTokenParser(context, injectionFilter));
+    /**
+     *  parser解析sql 并天机到context中
+     */
     context.appendSql(parser.parse(text));
     return true;
   }
 
   private GenericTokenParser createParser(TokenHandler handler) {
+    /**
+     * 解析的是${}占位符
+     */
     return new GenericTokenParser("${", "}", handler);
   }
 
@@ -68,14 +79,23 @@ public class TextSqlNode implements SqlNode {
 
     @Override
     public String handleToken(String content) {
+      /**
+       * 获取用户提供的实参
+       */
       Object parameter = context.getBindings().get("_parameter");
       if (parameter == null) {
         context.getBindings().put("value", null);
       } else if (SimpleTypeRegistry.isSimpleType(parameter.getClass())) {
         context.getBindings().put("value", parameter);
       }
+      /**
+       * 通过ognl解析content的值
+       */
       Object value = OgnlCache.getValue(content, context.getBindings());
       String srtValue = value == null ? "" : String.valueOf(value); // issue #274 return "" instead of "null"
+      /**
+       * 检测合法性
+       */
       checkInjection(srtValue);
       return srtValue;
     }

@@ -113,24 +113,51 @@ public class MapperAnnotationBuilder {
   }
 
   public void parse() {
+    /**
+     *
+     * parse 方法将会解析Mapper接口中的注解信息
+     */
     String resource = type.toString();
     if (!configuration.isResourceLoaded(resource)) {
       loadXmlResource();
       configuration.addLoadedResource(resource);
       assistant.setCurrentNamespace(type.getName());
+      /**
+       * 解析@CacheNameSpace注解
+       */
       parseCache();
+      /**
+       * 解析@CacheNamespaceRef注解
+       */
       parseCacheRef();
+      /**
+       *
+       */
       for (Method method : type.getMethods()) {
         if (!canHaveStatement(method)) {
           continue;
         }
+        /**
+         *
+         */
         if (getAnnotationWrapper(method, false, Select.class, SelectProvider.class).isPresent()
             && method.getAnnotation(ResultMap.class) == null) {
           parseResultMap(method);
         }
         try {
+          /**
+           *  解析@SelectKey @ResultMap等注解，并创建MappedStatment对象
+           */
           parseStatement(method);
         } catch (IncompleteElementException e) {
+          /**
+           * 如果解析过程中出现 InCompleteElementException 异常，可能是引用了未解析的注解，
+           * 这里将出现异常的方法添加到 Configuration.incompleteMethods集合中暂存，
+           *
+           * configurationElement方法解析映射配置文件，是按照从文件头到问加你尾的顺序解析的，但是有时候在解析一个节点时，
+           * 会应用定义在该节点之后，还未解析的节点，就会抛出IncompleteElementException
+           *
+           */
           configuration.addIncompleteMethod(new MethodResolver(this, method));
         }
       }

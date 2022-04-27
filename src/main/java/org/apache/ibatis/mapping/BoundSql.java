@@ -35,10 +35,31 @@ import org.apache.ibatis.session.Configuration;
  */
 public class BoundSql {
 
+  /**
+   * sqlNode --->sqlSource-->BoundSql  无论是staticSQLSource DynamicSqlSource还是RawSqlSource 最终都会统一
+   *
+   * 生成boundSql对象，其中封装了完整的sql语句，可能包含？占位符 参数映射关系parameterMappings集合以及用户传入的参数additionalParameters集合
+   *
+   */
+
+  /**
+   * 记录sql，语句中可能含有？占位符
+   */
   private final String sql;
+
   private final List<ParameterMapping> parameterMappings;
+  /**
+   * 客户端执行sql时传入的实际参数
+   */
   private final Object parameterObject;
+  /**
+   * 空的集合，之后会复制DynamicContext.bindings集合中的 内容
+   */
   private final Map<String, Object> additionalParameters;
+  /***
+   * additionalParameters集合对应的metaObject对象
+   *
+   */
   private final MetaObject metaParameters;
 
   public BoundSql(Configuration configuration, String sql, List<ParameterMapping> parameterMappings, Object parameterObject) {

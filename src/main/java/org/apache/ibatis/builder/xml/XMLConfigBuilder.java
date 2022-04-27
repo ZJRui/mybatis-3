@@ -183,6 +183,9 @@ public class XMLConfigBuilder extends BaseBuilder {
 
   private void pluginElement(XNode parent) throws Exception {
     if (parent != null) {
+      /**
+       * 遍历全部子节点<plugin>节点
+       */
       for (XNode child : parent.getChildren()) {
         String interceptor = child.getStringAttribute("interceptor");
         Properties properties = child.getChildrenAsProperties();

@@ -92,11 +92,20 @@ public class XMLMapperBuilder extends BaseBuilder {
 
   public void parse() {
     if (!configuration.isResourceLoaded(resource)) {
-      configurationElement(parser.evalNode("/mapper"));
+      configurationElement(parser.evalNode("/mapper"));//处理mapper节点
+      /**
+       * 将resource添加到 Configuration.loadedResources集合中保存，他是 HashSet<String>
+       *   类型 的集合，其中记录了已经加载的映射文件
+       */
       configuration.addLoadedResource(resource);
+      //注册mapper接口
       bindMapperForNamespace();
     }
 
+    /**
+     * 解析 reesultmap   cache-ref节点，   处理configurationElement方法中解析失败的sql语句节点
+     *
+     */
     parsePendingResultMaps();
     parsePendingCacheRefs();
     parsePendingStatements();
@@ -108,12 +117,22 @@ public class XMLMapperBuilder extends BaseBuilder {
 
   private void configurationElement(XNode context) {
     try {
+      /**
+       *  为每个nameSpace创建一个对应的Cache对象，并Configuration.caches集合中记录namespace与cache对象之间的关系
+       *
+       */
       String namespace = context.getStringAttribute("namespace");
       if (namespace == null || namespace.isEmpty()) {
         throw new BuilderException("Mapper's namespace cannot be empty");
       }
       builderAssistant.setCurrentNamespace(namespace);
+      /**
+       * Mybatis默认情况下没有开启二级缓存，如果要为某命名空间开启二级缓存功能，则需要在相应配置文件中添加<cache>节点
+       *
+       * 为每个nameSpace创建一个对应的Cache对象，并Configuration.caches集合中记录namespace与cache对象之间的关系
+       */
       cacheRefElement(context.evalNode("cache-ref"));
+
       cacheElement(context.evalNode("cache"));
       parameterMapElement(context.evalNodes("/mapper/parameterMap"));
       resultMapElements(context.evalNodes("/mapper/resultMap"));

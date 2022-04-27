@@ -38,16 +38,44 @@ public class ResultMap {
   private Configuration configuration;
 
   private String id;
+  /**
+   *
+   */
   private Class<?> type;
+
+  /**
+   * 记录了除 <discriminator>节点之外的其他映射关系
+   */
   private List<ResultMapping> resultMappings;
+  /**
+   * 记录了映射关系中带有id标志的映射关系 ，列如<id>节点 和<constriuctor>接地那的 <idArg>子节点
+   */
   private List<ResultMapping> idResultMappings;
+  /**
+   * 记录了映射关系中带有 constructor标志的映射关系，例如<constriuctor>所有子元素
+   */
   private List<ResultMapping> constructorResultMappings;
   private List<ResultMapping> propertyResultMappings;
+  /**
+   * 记录所有映射关系中涉及的column属性的集合
+   */
   private Set<String> mappedColumns;
   private Set<String> mappedProperties;
+  /**
+   * 鉴别器 discriminator节点
+   */
   private Discriminator discriminator;
+  /**
+   * 是否含有嵌套的结果映射，如果某个映射关系中存在resultMap属性，且不存在resultSet属性，则为true
+   */
   private boolean hasNestedResultMaps;
+  /**
+   * 是否含有嵌套查询，如果某个属性映射存在select属性，则为true
+   */
   private boolean hasNestedQueries;
+  /**
+   * 是否开启自动映射
+   */
   private Boolean autoMapping;
 
   private ResultMap() {

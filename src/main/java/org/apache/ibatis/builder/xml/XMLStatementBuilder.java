@@ -53,7 +53,15 @@ public class XMLStatementBuilder extends BaseBuilder {
     this.requiredDatabaseId = databaseId;
   }
 
+  /**
+   * 解析SQL节点的入口函数
+   */
   public void parseStatementNode() {
+    /**
+     * 获取sql接地那的id以及databaseId属性，若其dataBaseid 属性与当前使用的数据库不匹配 ，则不加载该sql节点；
+     * 如果存在相同id且databaseId不为空的sql节点，则不再加载该sql接地那。
+     *
+     */
     String id = context.getStringAttribute("id");
     String databaseId = context.getStringAttribute("databaseId");
 

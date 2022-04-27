@@ -46,6 +46,14 @@ public class Plugin implements InvocationHandler {
     Class<?> type = target.getClass();
     Class<?>[] interfaces = getAllInterfaces(type, signatureMap);
     if (interfaces.length > 0) {
+      /**
+       * 创建一个JDk代理对象，注意 此时需要传递一个InvocationHandler对象，Plugin对象就是InvocationHandler，
+       * 我们将Interceptor对象交给了InvocationHandler对象，因此InvocationHandler对象拦截到方法后会执行Interceptor对象的方法
+       *
+       * InvocationHandler（Plugin对象）会将拦截到的方法教给Interceptor对象，然后执行Interceptor的intercept方法
+       *
+       * 在Interceptor对象的方法中intercept方法，先执行自身逻辑，然后执行 InvocationHandler教给Interceptor的原始被拦截到的method
+       */
       return Proxy.newProxyInstance(
           type.getClassLoader(),
           interfaces,
@@ -57,8 +65,17 @@ public class Plugin implements InvocationHandler {
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     try {
+      //h获取当前方法所在的类或接口中，可被当前Interceptor拦截的方法
       Set<Method> methods = signatureMap.get(method.getDeclaringClass());
+      //如果当前调用的方法需要被拦截，则调用interceptor.interceptor方法进行连接处理
       if (methods != null && methods.contains(method)) {
+        /**
+         * 问题： interceptor对  method.invoke 进行了拦截，那么执行完 interceptor的intercept拦截之后
+         *  不执行原始目标方法了吗？
+         *   因为将原始目标方法method 封装到了 Invocation中，Invocation交给了Interceptor
+         *
+         *   在interceptor 的intercept的最后会执行  invocation.proceed(); ，这个proceed方法内部会继续执行method.invoke
+         */
         return interceptor.intercept(new Invocation(target, method, args));
       }
       return method.invoke(target, args);

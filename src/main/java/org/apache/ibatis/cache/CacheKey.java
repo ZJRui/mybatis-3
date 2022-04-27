@@ -27,6 +27,10 @@ import org.apache.ibatis.reflection.ArrayUtil;
  */
 public class CacheKey implements Cloneable, Serializable {
 
+  /**
+   * Mybatis 中因为涉及了动态sql等多方面的因素，缓存项的key不能仅仅通过一个String表示。所以提供了CacheKey
+   *
+   */
   private static final long serialVersionUID = 1146682552656046210L;
 
   public static final CacheKey NULL_CACHE_KEY = new CacheKey() {
@@ -47,8 +51,22 @@ public class CacheKey implements Cloneable, Serializable {
 
   private final int multiplier;
   private int hashcode;
+  /**
+   * 校验和
+   */
   private long checksum;
+  /**
+   * updateList集合的个数
+   */
   private int count;
+  /**
+   * （1）MappedStatement的id
+   * （2）指定查询结果集的范围，也就是RowBounds。offset和RowBounds。limit
+   * （3）查询所使用的sql语句，也就是boundSql.getSql方法返回的sql语句，其中可能包含 ？占位符
+   * （4）用户传递给上述sql语句的实际参数值
+   *
+   *这四部分会被记录到updateList
+   */
   // 8/21/2017 - Sonarlint flags this as needing to be marked transient. While true if content is not serializable, this
   // is not always true and thus should not be marked transient.
   private List<Object> updateList;
